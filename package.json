@@ -1,0 +1,25 @@
+{
+  "name": "seneca-ldap-store",
+  "version": "0.0.1",
+  "description": "Seneca LDAP Store",
+  "main": "lib/ldap-store.js",
+  "scripts": {
+    "test": "tap ./test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/gangleri/seneca-ldap-store.git"
+  },
+  "keywords": [
+    "Seneca",
+    "LDAP"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gangleri/seneca-ldap-store/issues"
+  },
+  "devDependencies": {
+    "tap": "~0.4.8"
+  }
+}
