@@ -21,5 +21,8 @@
   },
   "devDependencies": {
     "tap": "~0.4.8"
+  },
+  "dependencies": {
+    "ldapjs": "~0.7.0"
   }
 }
