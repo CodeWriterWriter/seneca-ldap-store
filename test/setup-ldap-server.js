@@ -2,20 +2,17 @@
 
 var ldap = require('ldapjs')
 var port = 1389
-var suffix = 'o=example'
-var db = {}
 
 module.exports.PORT = port
 
 module.exports.setupTestLdapServer = function(opts, done) {
-  db = opts.initialDB || db
   port = opts.suffix || port
-  suffix = opts.suffix || suffix
+  var db = opts.initialDB || {}
+  var suffix = opts.suffix || 'o=example'
 
-  var server = buildLdapServer() 
-
+  var server = buildLdapServer(db, suffix) 
   server.listen(port, function() {
-    done(null, db)
+    done(null, server, db)
   })
 }
 
@@ -27,7 +24,7 @@ function authorize(req, res, next) {
   return next()
 }
 
-function buildLdapServer() {
+function buildLdapServer(db, suffix) {
   var server = ldap.createServer()
 
   server.bind('cn=root', function(req, res, next) {
@@ -38,16 +35,47 @@ function buildLdapServer() {
     return next()
   })
 
-  server.bind(suffix, function(req, res, next) {
+  server.add(suffix, authorize, function(req, res, next) {
     var dn = req.dn.toString()
-    if (!db[dn])
-      return next(new ldap.NoSuchObjectError(dn))
+    var path = dn.split(',')
+    var index = path.length -1
+    var node = db 
 
-    if (!dn[dn].userpassword)
-      return next(new ldap.NoSuchAttributeError('userPassword'))
+    while(index >= 0) {
+      var key = path[index].trim()
+      if(!node[key] && index > 0)
+        node[key] = []
+      else if(index === 0)
+        node[key] = req.toObject().attributes
 
-    if (db[dn].userpassword !== req.credentials)
-      return next(new ldap.InvalidCredentialsError())
+      node = node[key]
+      index--
+    }
+    res.end()
+    return next()
+  })
+
+  server.del(suffix, authorize, function(req, res, next) {
+    var dn = req.dn.toString()
+    var path = dn.split(',')
+    var index = path.length -1
+    var node = db
+
+    while(index > 0) {
+      var key = path[index].trim()
+      node = node[key]
+
+      if(!node)
+        return next(new ldap.NoSuchObjectError(dn))
+
+      if(index === 1) {
+        delete node[path[0].trim()]
+      }
+
+      node = node[key]
+
+      index--
+    }
 
     res.end()
     return next()
@@ -55,62 +83,54 @@ function buildLdapServer() {
 
   server.search(suffix, authorize, function(req, res, next) {
     var dn = req.dn.toString()
-    if (!db[dn])
-      return next(new ldap.NoSuchObjectError(dn))
+    var path = dn.split(',')
+    var index = path.length -1
+    var node = db 
 
-    if (!dn[dn].userpassword)
-      return next(new ldap.NoSuchAttributeError('userPassword'))
+    while(index >= 0) {
+      var key = path[index].trim()
 
-    if (db[dn].userpassword !== req.credentials)
-      return next(new ldap.InvalidCredentialsError())
-
-    res.end()
-    return next()
-  })
-
-  server.compare(suffix, authorize, function(req, res, next) {
-    var dn = req.dn.toString()
-    if (!db[dn])
-      return next(new ldap.NoSuchObjectError(dn))
-
-    if (!db[dn][req.attribute])
-      return next(new ldap.NoSuchAttributeError(req.attribute))
-
-    var matches = false
-    var vals = db[dn][req.attribute]
-    for (var i = 0; i < vals.length; i++) {
-      if (vals[i] === req.value) {
-        matches = true
-        break
+      if(!node){
+        return next(new ldap.NoSuchObjectError(dn))
       }
+
+      if(index === 0) {
+        var result = {
+          dn: dn,
+          attributes: node[path[0].trim()]
+        }
+        res.send(result)
+      }
+
+      node = node[key]
+
+      index--
     }
 
-    res.end(matches)
-    return next()
-  })
-
-  server.add(suffix, authorize, function(req, res, next) {
-    var dn = req.dn.toString()
-
-    if (db[dn])
-      return next(new ldap.EntryAlreadyExistsError(dn))
-
-    db[dn] = req.toObject().attributes
-
     res.end()
     return next()
   })
 
-  server.del(suffix, authorize, function(req, res, next) {
-    var dn = req.dn.toString()
-    if (!db[dn])
-      return next(new ldap.NoSuchObjectError(dn))
+  // server.compare(suffix, authorize, function(req, res, next) {
+  //   var dn = req.dn.toString()
+  //   if (!db[dn])
+  //     return next(new ldap.NoSuchObjectError(dn))
 
-    delete db[dn]
+  //   if (!db[dn][req.attribute])
+  //     return next(new ldap.NoSuchAttributeError(req.attribute))
 
-    res.end()
-    return next()
-  })
+  //   var matches = false
+  //   var vals = db[dn][req.attribute]
+  //   for (var i = 0; i < vals.length; i++) {
+  //     if (vals[i] === req.value) {
+  //       matches = true
+  //       break
+  //     }
+  //   }
+
+  //   res.end(matches)
+  //   return next()
+  // })
 
   server.modify(suffix, authorize, function(req, res, next) {
     var dn = req.dn.toString()
