@@ -4,7 +4,7 @@
   "description": "Seneca LDAP Store",
   "main": "lib/ldap-store.js",
   "scripts": {
-    "test": "tap ./test"
+    "test": "tap ./test/*.test.js"
   },
   "repository": {
     "type": "git",
