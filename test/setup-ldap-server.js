@@ -18,9 +18,6 @@ module.exports.setupTestLdapServer = function(opts, done) {
 
 // authorization function to be used by all server handlers
 function authorize(req, res, next) {
-  if (!req.connection.ldap.bindDN.equals('cn=root'))
-    return next(new ldap.InsufficientAccessRightsError())
-
   return next()
 }
 
@@ -28,8 +25,9 @@ function buildLdapServer(db, suffix) {
   var server = ldap.createServer()
 
   server.bind('cn=root', function(req, res, next) {
-    if(req.dn.toString() !== 'cn=root' || req.credentials !== 'secret')
+    if(req.dn.toString() !== 'cn=root' || req.credentials !== 'secret') {
       return next(new ldap.InvalidCredentialsError())
+    }
 
     res.end()
     return next()
