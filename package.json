@@ -14,16 +14,22 @@
     "Seneca",
     "LDAP"
   ],
-  "author": "",
+  "author": "Alan Bradley",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/gangleri/seneca-ldap-store/issues"
+  },
+  "dependencies": {
+    "ldapjs": "~0.7.0"
   },
   "devDependencies": {
     "tap": "~0.4.8",
     "seneca": "~0.5.15"
   },
-  "dependencies": {
-    "ldapjs": "~0.7.0"
-  }
+  "files": [
+    "README.md",
+    "LICENSE.txt",
+    "lib/ldap-store.js"
+  ]
+
 }
