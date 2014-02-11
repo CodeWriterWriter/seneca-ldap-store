@@ -22,6 +22,21 @@ Tested on: Node 0.10
 
 ### Quick example
 ```JavaScript
+var seneca = require('seneca')()
+seneca.use('ldap-store', {
+  url: 'ldap://127.0.0.1:1389',
+  password: 'secret',
+  dn: 'cn=root'
+})
+
+seneca.ready(function(){
+  var user = seneca.make$('dev')
+  user.dn  = 'cn=foo, ou=users, o=example'
+  user.objectClass= 'unixUser'
+  user.save$(function(err, user){
+    console.log( "user.id = " + user.id  )
+  })
+})
 ```
 
 
