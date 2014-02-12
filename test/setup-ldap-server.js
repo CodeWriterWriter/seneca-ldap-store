@@ -67,62 +67,39 @@ function buildLdapServer(db, suffix) {
 
   server.modify(suffix, authorize, function(req, res, next) {
     var dn = req.dn.toString()
-    var path = dn.split(',')
-    var index = path.length -1
-    var node = db 
 
     if (!req.changes.length)
       return next(new ldap.ProtocolError('changes required'))
 
-    while(index >= 0) {
-      var key = path[index].trim()
-      node = node[key]
+    for(var i = 0; i < req.changes.length; i++) {
+      var change = req.changes[i]
+      var mod = change.modification
 
-      if(!node)
-        return next(new ldap.NoSuchObjectError(dn))
+      switch(change.operation) {
+        case 'replace' :
+          if (!db[dn][mod.type])
+            return next(new ldap.NoSuchAttributeError(mod.type));
 
-      if(index === 0) {
-        for(var i = 0; i < req.changes.length; i++) {
-          var change = req.changes[i]
-          var mod = change.modification
-
-          switch(change.operation) {
-            case 'replace' :
-              if (!node[mod.type])
-                return next(new ldap.NoSuchAttributeError(mod.type));
-
-              if (!mod.vals || !mod.vals.length) {
-                delete node[mod.type];
-              } else {
-                node[mod.type] = mod.vals;
-              }
-
-              break
-
-            case 'add':
-              if (!node[mod.type]) {
-                node[mod.type] = mod.vals;
-              } else {
-                mod.vals.forEach(function(v) {
-                  if (node[mod.type].indexOf(v) === -1)
-                    node[mod.type].push(v);
-                });
-              }
-              break
-
-            case 'delete':
-              if (!entry[mod.type])
-                return next(new ldap.NoSuchAttributeError(mod.type));
-
-              delete entry[mod.type];
-
-              break
+          if (!mod.vals || !mod.vals.length) {
+            delete db[dn][mod.type];
+          } else {
+            db[dn][mod.type] = mod.vals;
           }
-        }
-      }
-      index--
-    }
 
+          break
+
+        case 'add':
+          if (!db[dn][mod.type]) {
+            db[dn][mod.type] = mod.vals;
+          } else {
+            mod.vals.forEach(function(v) {
+              db[dn][mod.type] = v
+            });
+          }
+          break
+
+      }
+    }
     res.end()
     return next()
 

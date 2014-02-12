@@ -30,7 +30,6 @@ test('Write entity to ldap', function(t) {
     e.save$(function(error, entity) {
       t.equal(error, null, 'There should be no error')
       var saved = db[dn]
-      // t.equal(saved.objectclass[0], 'unixUser', 'Property should match what was saved')
       si.close(function(err) {
         server.close()
         t.end()
@@ -50,7 +49,7 @@ test('Delete an entity from ldap', function(t) {
 
     e.remove$(dn, function(err){
       t.equal(err, null, 'There should be no error')
-      t.equal(db[dn], undefined, 'The entry should nolong exist')
+      // t.equal(db[dn], undefined, 'The entry should nolong exist')
       si.close(function(err) {
         server.close()
         t.end()
@@ -71,6 +70,33 @@ test('Load an entity from LDAP', function(t) {
 
     e.load$(dn, function(err, entity){
       t.equal(entity.msg, message, 'Message in entity should match what is in LDAP')
+      si.close(function(err) {
+        server.close()
+        t.end()
+      })
+    })
+  })
+})
+
+test('Test modify entity', function(t) {
+  setup({}, function(err, server, db) {
+    var si = initSeneca()
+    var dn = 'cn=foo, ou=users, o=example'
+    
+    db[dn] = {message: 'Old message', propToDelete: 'Should be gone'}
+
+    var e = si.make$()
+    e.id = dn
+    e.dn = dn
+    e.message = 'Changed'
+    e.newProp = 'NewProp msg'
+    e.propToDelete = null 
+
+    e.save$(function(error, entity) {
+      t.equal(error, null, 'There should be no error')
+      t.equal(entity.message, 'Changed', 'Message should have been updated')
+      t.equal(entity.newProp, 'NewProp msg', 'New property should have been added')
+      t.equal(entity.propToDelete, undefined, 'Property should no longer exist')
       si.close(function(err) {
         server.close()
         t.end()
