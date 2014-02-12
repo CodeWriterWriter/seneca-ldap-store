@@ -18,7 +18,7 @@ persistence.
 If you're using this module, feel free to contact me on twitter if you
 have an questions [@gangleri_](http://twitter.com/gangleri_)
 
-Current Version: 0.0.1
+Current Version: [![NPM version](https://badge.fury.io/js/seneca-ldap-store.png)](http://badge.fury.io/js/seneca-ldap-store) 
 Tested on: Node 0.10
 
 ### Quick example
