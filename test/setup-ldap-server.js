@@ -1,3 +1,4 @@
+/* Copyright (c) 2013 Alan Bradley, MIT License */
 "use strict"
 
 var ldap = require('ldapjs')
@@ -35,44 +36,15 @@ function buildLdapServer(db, suffix) {
 
   server.add(suffix, authorize, function(req, res, next) {
     var dn = req.dn.toString()
-    var path = dn.split(',')
-    var index = path.length -1
-    var node = db 
-
-    while(index >= 0) {
-      var key = path[index].trim()
-      if(!node[key] && index > 0)
-        node[key] = []
-      else if(index === 0)
-        node[key] = req.toObject().attributes
-
-      node = node[key]
-      index--
-    }
+    db[dn] = req.toObject().attributes
     res.end()
     return next()
   })
 
   server.del(suffix, authorize, function(req, res, next) {
     var dn = req.dn.toString()
-    var path = dn.split(',')
-    var index = path.length -1
-    var node = db
 
-    while(index > 0) {
-      var key = path[index].trim()
-      node = node[key]
-
-      if(!node)
-        return next(new ldap.NoSuchObjectError(dn))
-
-      if(index === 1) {
-        delete node[path[0].trim()]
-      }
-
-      node = node[key]
-      index--
-    }
+    delete db[dn]
 
     res.end()
     return next()
@@ -80,28 +52,14 @@ function buildLdapServer(db, suffix) {
 
   server.search(suffix, authorize, function(req, res, next) {
     var dn = req.dn.toString()
-    var path = dn.split(',')
-    var index = path.length -1
-    var node = db 
-
-    while(index >= 0) {
-      var key = path[index].trim()
-
-      if(!node){
-        return next(new ldap.NoSuchObjectError(dn))
-      }
-
-      if(index === 0) {
-        var result = {
-          dn: dn,
-          attributes: node[path[0].trim()]
-        }
-        res.send(result)
-      }
-
-      node = node[key]
-      index--
+    if(!db[dn]) 
+      return next(new ldap.NoSuchObjectError(dn))
+    
+    var result = {
+      dn: dn,
+      attributes: db[dn]
     }
+    res.send(result)
 
     res.end()
     return next()
