@@ -3,14 +3,12 @@
 
 var ldap = require('ldapjs')
 var port = 1389
+var db = {}
+var suffix = 'o=example'
 
 module.exports.PORT = port
 
-module.exports.setupTestLdapServer = function(opts, done) {
-  port = opts.suffix || port
-  var db = opts.initialDB || {}
-  var suffix = opts.suffix || 'o=example'
-
+module.exports.setupTestLdapServer = function(done) {
   var server = buildLdapServer(db, suffix) 
   server.listen(port, function() {
     done(null, server, db)

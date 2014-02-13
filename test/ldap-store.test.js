@@ -18,7 +18,7 @@ function initSeneca() {
 }
 
 test('Write entity to ldap', function(t) {
-  setup({}, function(err, server, db) {
+  setup(function(err, server, db) {
     var si = initSeneca()
     var e = si.make$()
     var dn = 'cn=foo, ou=users, o=example'
@@ -39,7 +39,7 @@ test('Write entity to ldap', function(t) {
 })
 
 test('Delete an entity from ldap', function(t) {
-  setup({}, function(err, server, db) {
+  setup(function(err, server, db) {
     var si = initSeneca()
     var e = si.make$()
     var dn = 'cn=foo, ou=users, o=example'
@@ -59,7 +59,7 @@ test('Delete an entity from ldap', function(t) {
 })
 
 test('Load an entity from LDAP', function(t) {
-  setup({}, function(err, server, db) {
+  setup(function(err, server, db) {
     var si = initSeneca()
     var e = si.make$()
     var dn = 'cn=foo, ou=users, o=example'
@@ -79,7 +79,7 @@ test('Load an entity from LDAP', function(t) {
 })
 
 test('Test modify entity', function(t) {
-  setup({}, function(err, server, db) {
+  setup(function(err, server, db) {
     var si = initSeneca()
     var dn = 'cn=foo, ou=users, o=example'
     
