@@ -3,13 +3,12 @@
 
 var ldap = require('ldapjs')
 var port = 1389
-var db = {}
-var suffix = 'o=example'
 
 module.exports.PORT = port
 
-module.exports.setupTestLdapServer = function(done) {
-  var server = buildLdapServer(db, suffix) 
+module.exports.setupTestLdapServer = function(baseDN, done) {
+  var db = {}
+  var server = buildLdapServer(db, baseDN) 
   server.listen(port, function() {
     done(null, server, db)
   })
@@ -23,13 +22,8 @@ function authorize(req, res, next) {
 function buildLdapServer(db, suffix) {
   var server = ldap.createServer()
 
-  server.bind('cn=root', function(req, res, next) {
-    if(req.dn.toString() !== 'cn=root' || req.credentials !== 'secret') {
-      return next(new ldap.InvalidCredentialsError())
-    }
-
-    res.end()
-    return next()
+  server.bind(suffix, function(req, res, next) {
+    res.end();
   })
 
   server.add(suffix, authorize, function(req, res, next) {
@@ -50,14 +44,16 @@ function buildLdapServer(db, suffix) {
 
   server.search(suffix, authorize, function(req, res, next) {
     var dn = req.dn.toString()
-    if(!db[dn]) 
-      return next(new ldap.NoSuchObjectError(dn))
-    
-    var result = {
-      dn: dn,
-      attributes: db[dn]
+
+    for(var key in db) {
+      if(key.indexOf(dn) != -1) {
+        var result = {
+          dn: key,
+          attributes: db[key]
+        }
+        res.send(result)
+      }
     }
-    res.send(result)
 
     res.end()
     return next()
